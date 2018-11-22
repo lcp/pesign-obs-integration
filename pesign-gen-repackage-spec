@@ -247,8 +247,6 @@ sub print_package {
 		print SPEC "Name: $p->{name}\n";
 		print SPEC "Buildroot: $directory\n";
 		print SPEC "\%define _use_internal_dependency_generator 0\n";
-		print SPEC "\%define __find_provides %{nil}\n";
-		print SPEC "\%define __find_requires %{nil}\n";
 		print SPEC "\%define __find_supplements %{nil}\n";
 		if ($p->{nosource}) {
 			# We do not generate any no(src).rpm, but we want the
@@ -311,12 +309,18 @@ my %depflags = (
 	"="    => (1 << 3),
 	rpmlib => (1 << 24),
 );
+my %depskip = (
+	find_requires => (1 << 14),
+	find_provides => (1 << 15),
+);
 
 sub print_deps {
 	my ($depname, $list) = @_;
 
 	foreach my $d (@$list) {
 		next if ($d->{flags} & $depflags{rpmlib});
+		next if ($d->{flags} & $depskip{find_requires});
+		next if ($d->{flags} & $depskip{find_provides});
 
 		print SPEC $depname;
 		my @deptypes;
